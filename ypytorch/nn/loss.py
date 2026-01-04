@@ -31,6 +31,10 @@ class MSELoss(Module):
         squared = diff ** 2
         return squared.mean()
     
+    def __call__(self, y_pred: Tensor, y_true: Tensor) -> Tensor:
+        """使损失函数可以像函数一样调用"""
+        return self.forward(y_pred, y_true)
+    
     def __repr__(self) -> str:
         return "MSELoss()"
 

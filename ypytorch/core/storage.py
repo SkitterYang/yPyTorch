@@ -8,19 +8,23 @@ class Storage:
     底层存储类，使用 NumPy 数组作为后端
     """
     
-    def __init__(self, data: Union[np.ndarray, List, Tuple, int, float]):
+    def __init__(self, data: Union[np.ndarray, List, Tuple, int, float, np.generic]):
         """
         初始化存储
         
         Args:
-            data: 数据，可以是 numpy array、list、tuple 或标量
+            data: 数据，可以是 numpy array、list、tuple、标量或 numpy 标量类型
         """
         if isinstance(data, np.ndarray):
             self._data = data
+        elif isinstance(data, np.generic):
+            # 处理 numpy 标量类型（如 np.float32, np.int32 等）
+            self._data = np.array(data, dtype=np.float32)
         elif isinstance(data, (list, tuple)):
             self._data = np.array(data, dtype=np.float32)
         elif isinstance(data, (int, float)):
-            self._data = np.array([data], dtype=np.float32)
+            # 标量应该保持为0维数组（形状为 ()）
+            self._data = np.array(data, dtype=np.float32)
         else:
             raise TypeError(f"Unsupported data type: {type(data)}")
     

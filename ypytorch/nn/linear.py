@@ -29,7 +29,7 @@ class Linear(Module):
         self.bias = bias
         
         # 初始化权重
-        weight = Tensor(np.random.randn(out_features, in_features).astype(np.float32))
+        weight = Tensor(np.random.randn(out_features, in_features).astype(np.float32), requires_grad=True)
         xavier_uniform_(weight)
         self.register_parameter('weight', weight)
         
@@ -51,7 +51,10 @@ class Linear(Module):
             输出张量，形状为 (..., out_features)
         """
         # y = x @ W^T + b
-        output = ypt.ops.math.matmul(x, self.weight.transpose(0, 1))
+        # 使用转置 Function 支持自动求导
+        from ..autograd.functions import Transpose
+        weight_T = Transpose.apply(self.weight, 0, 1)
+        output = ypt.ops.math.matmul(x, weight_T)
         
         if self.bias is not None:
             output = output + self.bias

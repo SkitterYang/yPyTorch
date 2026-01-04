@@ -60,10 +60,7 @@ class Function:
             for arg in args
         )
         
-        # 保存输入张量（用于反向传播）
-        ctx.saved_tensors = [arg for arg in args if isinstance(arg, Tensor)]
-        
-        # 执行前向传播
+        # 执行前向传播（forward 方法中会保存需要的张量）
         output = cls.forward(ctx, *args, **kwargs)
         
         # 如果不需要梯度，直接返回

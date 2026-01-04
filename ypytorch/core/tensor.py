@@ -111,7 +111,11 @@ class Tensor:
     
     def __getitem__(self, key):
         """索引访问"""
-        return Tensor(self._storage[key], requires_grad=self.requires_grad)
+        result_data = self._storage[key]
+        # 如果结果是标量，需要转换为数组
+        if not isinstance(result_data, np.ndarray):
+            result_data = np.array(result_data)
+        return Tensor(result_data, requires_grad=self.requires_grad)
     
     def __setitem__(self, key, value):
         """索引赋值"""

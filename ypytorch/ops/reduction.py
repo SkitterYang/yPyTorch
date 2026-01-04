@@ -23,6 +23,8 @@ def sum(x: Tensor, dim: Optional[Union[int, tuple]] = None, keepdim: bool = Fals
     
     if not x.requires_grad:
         result_data = np.sum(x.data, axis=dim, keepdims=keepdim)
+        if not isinstance(result_data, np.ndarray):
+            result_data = np.array(result_data)
         return Tensor(result_data, requires_grad=False)
     
     return Sum.apply(x, dim, keepdim)
@@ -34,6 +36,8 @@ def mean(x: Tensor, dim: Optional[Union[int, tuple]] = None, keepdim: bool = Fal
         x = Tensor(x)
     
     result_data = np.mean(x.data, axis=dim, keepdims=keepdim)
+    if not isinstance(result_data, np.ndarray):
+        result_data = np.array(result_data)
     return Tensor(result_data, requires_grad=x.requires_grad)
 
 

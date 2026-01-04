@@ -12,14 +12,14 @@ echo "yPyTorch 单元测试"
 echo "=========================================="
 echo ""
 
-# 检查依赖
-python3 -c "import pytest, numpy" 2>/dev/null || {
-    echo "[ERROR] 缺少依赖，请安装: pip install -r requirements.txt"
+# 检查 uv 是否安装
+if ! command -v uv &> /dev/null; then
+    echo "[ERROR] uv 未安装，请先安装 uv: curl -LsSf https://astral.sh/uv/install.sh | sh"
     exit 1
-}
+fi
 
-# 运行测试
-pytest tests/ -v --tb=short
+# 使用 uv run 运行测试（uv 会自动管理依赖）
+uv run pytest tests/ -v --tb=short
 
 echo ""
 echo "=========================================="

@@ -76,6 +76,8 @@ class Module:
             param: 参数张量
         """
         self._parameters[name] = param
+        # 设置为实例属性，方便访问
+        setattr(self, name, param)
     
     def add_module(self, name: str, module: 'Module'):
         """

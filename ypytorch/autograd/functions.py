@@ -16,6 +16,7 @@ class Add(Function):
             x = Tensor(x)
         if not isinstance(y, Tensor):
             y = Tensor(y)
+        ctx.save_for_backward(x, y)
         result = Tensor(x.data + y.data)
         return result
     
@@ -35,19 +36,19 @@ class Add(Function):
         if x.shape != grad_output.shape:
             # 找到需要 sum 的维度
             axes = tuple(range(len(grad_output.shape) - len(x.shape)))
-            grad_x = grad_output.sum(axis=axes)
+            grad_x = grad_output.sum(dim=axes)
             # 如果还有维度不匹配，reshape
             while grad_x.shape != x.shape:
-                grad_x = grad_x.sum(axis=0, keepdims=True)
+                grad_x = grad_x.sum(dim=0, keepdim=True)
                 if grad_x.shape == x.shape:
                     break
         
         # 如果 y 的形状与 grad_output 不同，需要 sum
         if y.shape != grad_output.shape:
             axes = tuple(range(len(grad_output.shape) - len(y.shape)))
-            grad_y = grad_output.sum(axis=axes)
+            grad_y = grad_output.sum(dim=axes)
             while grad_y.shape != y.shape:
-                grad_y = grad_y.sum(axis=0, keepdims=True)
+                grad_y = grad_y.sum(dim=0, keepdim=True)
                 if grad_y.shape == y.shape:
                     break
         
@@ -180,7 +181,11 @@ class Sum(Function):
         ctx.save('dim', dim)
         ctx.save('keepdim', keepdim)
         ctx.save('original_shape', x.shape)
-        result = Tensor(np.sum(x.data, axis=dim, keepdims=keepdim))
+        # 确保结果是 numpy array，即使是标量也要转换为数组
+        result_data = np.sum(x.data, axis=dim, keepdims=keepdim)
+        if not isinstance(result_data, np.ndarray):
+            result_data = np.array(result_data)
+        result = Tensor(result_data)
         return result
     
     @staticmethod
@@ -287,6 +292,35 @@ class Log(Function):
         
         x = ctx.saved_tensors[0]
         grad = Tensor((1.0 / x.data) * grad_output.data)
+        return grad
+
+
+class Transpose(Function):
+    """转置操作的梯度函数"""
+    
+    @staticmethod
+    def forward(ctx, x, dim0, dim1):
+        """前向传播"""
+        if not isinstance(x, Tensor):
+            x = Tensor(x)
+        ctx.save_for_backward(x)
+        ctx.save('dim0', dim0)
+        ctx.save('dim1', dim1)
+        axes = list(range(len(x.shape)))
+        axes[dim0], axes[dim1] = axes[dim1], axes[dim0]
+        result = Tensor(x.data.transpose(axes))
+        return result
+    
+    @staticmethod
+    def backward(ctx, grad_output):
+        """反向传播"""
+        # 转置的梯度：再次转置即可
+        x = ctx.saved_tensors[0]
+        dim0 = ctx.saved_values.get('dim0')
+        dim1 = ctx.saved_values.get('dim1')
+        axes = list(range(len(grad_output.shape)))
+        axes[dim0], axes[dim1] = axes[dim1], axes[dim0]
+        grad = Tensor(grad_output.data.transpose(axes))
         return grad
 
 
