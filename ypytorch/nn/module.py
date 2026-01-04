@@ -18,6 +18,20 @@ class Module:
         self._modules = {}
         self.training = True
     
+    def __setattr__(self, name: str, value):
+        """设置属性，自动检测并注册子模块"""
+        # 如果 value 是 Module 实例，自动注册为子模块
+        if isinstance(value, Module):
+            if not hasattr(self, '_modules'):
+                # 如果 _modules 还没有初始化，先初始化
+                object.__setattr__(self, '_parameters', {})
+                object.__setattr__(self, '_modules', {})
+                object.__setattr__(self, 'training', True)
+            self._modules[name] = value
+        
+        # 调用父类的 __setattr__
+        object.__setattr__(self, name, value)
+    
     def forward(self, x: Tensor) -> Tensor:
         """
         前向传播

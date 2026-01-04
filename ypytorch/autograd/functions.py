@@ -106,6 +106,7 @@ class Sub(Function):
             x = Tensor(x)
         if not isinstance(y, Tensor):
             y = Tensor(y)
+        ctx.save_for_backward(x, y)
         result = Tensor(x.data - y.data)
         return result
     
@@ -116,7 +117,31 @@ class Sub(Function):
         # d(x-y)/dx = grad_output
         # d(x-y)/dy = -grad_output
         
-        return grad_output, -grad_output
+        x, y = ctx.saved_tensors
+        
+        # 处理广播
+        grad_x = grad_output
+        grad_y = -grad_output
+        
+        # 如果 x 的形状与 grad_output 不同，需要 sum
+        if x.shape != grad_output.shape:
+            axes = tuple(range(len(grad_output.shape) - len(x.shape)))
+            grad_x = grad_output.sum(dim=axes)
+            while grad_x.shape != x.shape:
+                grad_x = grad_x.sum(dim=0, keepdim=True)
+                if grad_x.shape == x.shape:
+                    break
+        
+        # 如果 y 的形状与 grad_output 不同，需要 sum
+        if y.shape != grad_output.shape:
+            axes = tuple(range(len(grad_output.shape) - len(y.shape)))
+            grad_y = (-grad_output).sum(dim=axes)
+            while grad_y.shape != y.shape:
+                grad_y = grad_y.sum(dim=0, keepdim=True)
+                if grad_y.shape == y.shape:
+                    break
+        
+        return grad_x, grad_y
 
 
 class Div(Function):

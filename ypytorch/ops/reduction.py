@@ -31,14 +31,38 @@ def sum(x: Tensor, dim: Optional[Union[int, tuple]] = None, keepdim: bool = Fals
 
 
 def mean(x: Tensor, dim: Optional[Union[int, tuple]] = None, keepdim: bool = False) -> Tensor:
-    """求均值"""
+    """
+    求均值
+    
+    使用 sum / n 来实现，以支持自动求导
+    """
     if not isinstance(x, Tensor):
         x = Tensor(x)
     
-    result_data = np.mean(x.data, axis=dim, keepdims=keepdim)
-    if not isinstance(result_data, np.ndarray):
-        result_data = np.array(result_data)
-    return Tensor(result_data, requires_grad=x.requires_grad)
+    if not x.requires_grad:
+        result_data = np.mean(x.data, axis=dim, keepdims=keepdim)
+        if not isinstance(result_data, np.ndarray):
+            result_data = np.array(result_data)
+        return Tensor(result_data, requires_grad=False)
+    
+    # 使用 sum / n 来实现 mean，以支持自动求导
+    sum_result = sum(x, dim=dim, keepdim=keepdim)
+    
+    # 计算元素数量
+    if dim is None:
+        # 所有维度
+        n = x.size
+    else:
+        # 指定维度
+        if isinstance(dim, int):
+            dim = (dim,)
+        n = 1
+        for d in dim:
+            n *= x.shape[d]
+    
+    # mean = sum / n
+    result = sum_result / n
+    return result
 
 
 def max(x: Tensor, dim: Optional[Union[int, tuple]] = None, keepdim: bool = False) -> Tensor:
